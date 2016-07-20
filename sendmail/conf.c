@@ -314,6 +314,7 @@ setdefaults(e)
 	e->e_xfqgrp = NOQGRP;
 	e->e_xfqdir = NOQDIR;
 	e->e_ctime = curtime();
+	e->e_smtputf8 = false;
 	SevenBitInput = false;			/* option 7 */
 	MaxMciCache = 1;			/* option k */
 	MciCacheTimeout = 5 MINUTES;		/* option K */
@@ -5746,6 +5747,9 @@ char	*CompileOptions[] =
 	"DNSMAP",
 # endif
 #endif
+#if EAI
+	"EAI",
+#endif
 #if EGD
 	"EGD",
 #endif
@@ -6235,10 +6239,6 @@ char	*FFRCompileOptions[] =
 	*/
 
 	"_FFR_DROP_TRUSTUSER_WARNING",
-#endif
-#if _FFR_EIGHT_BIT_ADDR_OK
-	/* EightBitAddrOK: allow 8-bit e-mail addresses */
-	"_FFR_EIGHT_BIT_ADDR_OK",
 #endif
 #if _FFR_EXTRA_MAP_CHECK
 	/* perform extra checks on $( $) in R lines */

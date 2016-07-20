@@ -65,6 +65,11 @@ static bool	NotFirstDelivery = false;
 #define SRV_REQ_AUTH	0x0400	/* require AUTH */
 #define SRV_REQ_SEC	0x0800	/* require security - equiv to AuthOptions=p */
 #define SRV_TMP_FAIL	0x1000	/* ruleset caused a temporary failure */
+#if EAI
+# define SRV_OFFER_EAI	0x2000	/* offer SMTPUTF* */
+#else
+#error "test EAI!"
+#endif
 
 static unsigned int	srvfeatures __P((ENVELOPE *, char *, unsigned int));
 
@@ -121,6 +126,27 @@ extern ENVELOPE	BlankEnvelope;
 
 #define SKIP_SPACE(s)	while (isascii(*s) && isspace(*s))	\
 				(s)++
+
+/*
+** ADDR_IS_ASCII -- check whether an address is 100% printable ASCII
+**
+**	Parameters:
+**		a -- an address (or other string)
+**
+**	Returns:
+**		TRUE if a is non-NULL and points to only printable ASCII
+**		FALSE if a is NULL and points to printable ASCII
+**		FALSE if a is non-NULL and points to something containing 8-bittery
+*/
+
+bool
+addr_is_ascii(a)
+	char * a;
+{
+	while (a != NULL && *a != '\0' && *a >= ' ' && *a < 127)
+		a++;
+	return (a != NULL && *a == '\0');
+}
 
 /*
 **  PARSE_ESMTP_ARGS -- parse EMSTP arguments (for MAIL, RCPT)
@@ -898,6 +924,9 @@ smtp(nullserver, d_flags, e)
 		| (bitset(TLS_I_NO_VRFY, TLS_Srv_Opts) ? SRV_NONE
 						       : SRV_VRFY_CLT)
 #endif /* STARTTLS */
+#if EAI
+		| SRV_OFFER_EAI
+#endif /* EAI */
 		;
 	if (nullserver == NULL)
 	{
@@ -2523,6 +2552,10 @@ smtp(nullserver, d_flags, e)
 			if (SendMIMEErrors && bitset(SRV_OFFER_DSN, features))
 				message("250-DSN");
 #endif /* DSN */
+#if EAI
+			if (bitset(SRV_OFFER_EAI, features))
+				message("250-SMTPUTF8");
+#endif /* EAI */
 			if (bitset(SRV_OFFER_ETRN, features))
 				message("250-ETRN");
 #if SASL
@@ -2614,6 +2647,7 @@ smtp(nullserver, d_flags, e)
 
 			if (protocol == NULL)
 				protocol = "SMTP";
+
 			macdefine(&e->e_macro, A_PERM, 'r', protocol);
 			macdefine(&e->e_macro, A_PERM, 's', sendinghost);
 
@@ -2695,6 +2729,12 @@ smtp(nullserver, d_flags, e)
 					mail_esmtp_args);
 			if (Errors > 0)
 				sm_exc_raisenew_x(&EtypeQuickAbort, 1);
+
+			/* UTF8 addresses are only legal with SMTPUTF8 */
+			if (!e->e_smtputf8 && !addr_is_ascii(e->e_from.q_paddr)) {
+				usrerr("553 5.6.7 That address requires SMTPUTF8");
+				sm_exc_raisenew_x(&EtypeQuickAbort, 1);
+			}
 
 #if SASL
 # if _FFR_AUTH_PASSING
@@ -2933,6 +2973,11 @@ smtp(nullserver, d_flags, e)
 				usrerr("501 5.0.0 Missing recipient");
 				goto rcpt_done;
 			}
+			if (!e->e_smtputf8 && !addr_is_ascii(a))
+			{
+				usrerr("553 5.6.7 Address requires SMTPUTF8");
+				goto rcpt_done;
+			}
 
 			if (delimptr != NULL && *delimptr != '\0')
 				*delimptr++ = '\0';
@@ -3082,7 +3127,7 @@ smtp(nullserver, d_flags, e)
 #if !MILTER
 		rcpt_done:
 #endif /* !MILTER */
-		
+
 			macdefine(&e->e_macro, A_PERM,
 				macid("{rcpt_mailer}"), NULL);
 			macdefine(&e->e_macro, A_PERM,
@@ -4820,6 +4865,17 @@ mail_esmtp_args(a, kp, vp, e)
 
 		/* XXX: check whether more characters follow? */
 	}
+#if EAI
+	else if (sm_strcasecmp(kp, "smtputf8") == 0)
+	{
+		if (!bitset(SRV_OFFER_EAI, e->e_features))
+		{
+			usrerr("504 5.7.0 Sorry, SMTPUTF8 not supported/enabled");
+			/* NOTREACHED */
+		}
+		e->e_smtputf8 = true;
+	}
+#endif
 	else
 	{
 		usrerr("555 5.5.4 %s parameter unrecognized", kp);
@@ -5174,6 +5230,9 @@ static struct
 	{ 'C',	SRV_REQ_SEC	},
 	{ 'D',	SRV_OFFER_DSN	},
 	{ 'E',	SRV_OFFER_ETRN	},
+#if EAI
+	{ 'I',	SRV_OFFER_EAI	},
+#endif
 	{ 'L',	SRV_REQ_AUTH	},
 #if PIPELINING
 # if _FFR_NO_PIPE

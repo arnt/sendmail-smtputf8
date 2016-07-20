@@ -665,6 +665,10 @@ queueup(e, announce, msync)
 		*p++ = 'n';
 	if (bitset(EF_SPLIT, e->e_flags))
 		*p++ = 's';
+#if EAI
+	if (e->e_smtputf8)
+		*p++ = 'e';
+#endif
 	*p++ = '\0';
 	if (buf[0] != '\0')
 		(void) sm_io_fprintf(tfp, SM_TIME_DEFAULT, "F%s\n", buf);
@@ -4285,6 +4289,12 @@ readqf(e, openonly)
 				  case 'w':	/* warning sent */
 					e->e_flags |= EF_WARNING;
 					break;
+
+#if EAI
+				  case 'e':	/* message requires EAI */
+					e->e_smtputf8 = true;
+					break;
+#endif /* EAI */
 				}
 			}
 			break;

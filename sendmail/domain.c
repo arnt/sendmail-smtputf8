@@ -13,6 +13,9 @@
 
 #include <sendmail.h>
 #include "map.h"
+#if EAI
+#include <unicode/uidna.h>
+#endif
 
 #if NAMED_BIND
 SM_RCSID("@(#)$Id: domain.c,v 8.205 2013-11-22 20:51:55 ca Exp $ (with name server)")
@@ -235,6 +238,26 @@ getmxrr(host, mxhosts, mxprefs, droplocalhost, rcode, tryfallback, pttl)
 	/* efficiency hack -- numeric or non-MX lookups */
 	if (host[0] == '[')
 		goto punt;
+
+#if EAI
+	if (!addr_is_ascii(host))
+	{
+		char buf[1024];
+		UErrorCode error = U_ZERO_ERROR;
+		UIDNAInfo info = UIDNA_INFO_INITIALIZER;
+		UIDNA *idna;
+		int anl;
+
+		idna = uidna_openUTS46(UIDNA_DEFAULT, &error);
+		anl = uidna_nameToASCII_UTF8(idna,
+					     host, strlen(host),
+					     buf, sizeof(buf) - 1,
+					     &info,
+					     &error);
+		uidna_close(idna);
+		host = sm_rpool_strdup_x(CurEnv->e_rpool, buf);
+	}
+#endif /* EAI */
 
 	/*
 	**  If we don't have MX records in our host switch, don't

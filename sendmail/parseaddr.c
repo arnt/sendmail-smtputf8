@@ -273,12 +273,6 @@ invalidaddr(addr, delimptr, isrcpt)
 	}
 	for (; *addr != '\0'; addr++)
 	{
-		if (!EightBitAddrOK && (*addr & 0340) == 0200)
-		{
-			setstat(EX_USAGE);
-			result = true;
-			*addr = BAD_CHAR_REPLACEMENT;
-		}
 		if (++len > MAXNAME - 1)
 		{
 			char saved = *addr;
@@ -350,7 +344,7 @@ hasctrlchar(addr, isrcpt, complain)
 			}
 			result = "too long";
 		}
-		if (!EightBitAddrOK && !quoted && (*addr < 32 || *addr == 127))
+		if (!quoted && ((0x7f & *addr) < 32 || *addr == 127))
 		{
 			result = "non-printable character";
 			*addr = BAD_CHAR_REPLACEMENT;
@@ -367,13 +361,6 @@ hasctrlchar(addr, isrcpt, complain)
 				*--addr = BAD_CHAR_REPLACEMENT;
 				break;
 			}
-		}
-		if (!EightBitAddrOK && (*addr & 0340) == 0200)
-		{
-			setstat(EX_USAGE);
-			result = "8-bit character";
-			*addr = BAD_CHAR_REPLACEMENT;
-			continue;
 		}
 	}
 	if (quoted)
@@ -759,11 +746,6 @@ prescan(addr, delim, pvpbuf, pvpbsize, delimptr, toktab, ignore)
 				}
 
 				/* squirrel it away */
-#if !ALLOW_255
-				if ((char) c == (char) -1 && !tTd(82, 101) &&
-				    !EightBitAddrOK)
-					c &= 0x7f;
-#endif /* !ALLOW_255 */
 				*q++ = c;
 			}
 

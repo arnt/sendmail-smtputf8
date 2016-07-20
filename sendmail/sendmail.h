@@ -781,8 +781,13 @@ MCI
 #else
 # define MCIF_NOTSTICKY	0
 #endif
+#if EAI
+#define MCIF_EAI	0x40000000	/* SMTPUTF8 supported */
+#else
+#define MCIF_EAI	0x00000000	/* for MCIF_EXTENS */
+#endif /* EAI */
 
-#define MCIF_EXTENS	(MCIF_EXPN | MCIF_SIZE | MCIF_8BITMIME | MCIF_DSN | MCIF_8BITOK | MCIF_AUTH | MCIF_ENHSTAT | MCIF_TLS | MCIF_AUTH2)
+#define MCIF_EXTENS	(MCIF_EXPN | MCIF_SIZE | MCIF_8BITMIME | MCIF_DSN | MCIF_8BITOK | MCIF_AUTH | MCIF_ENHSTAT | MCIF_TLS | MCIF_AUTH2 | MCIF_EAI)
 
 /* states */
 #define MCIS_CLOSED	0		/* no traffic on this connection */
@@ -921,6 +926,7 @@ struct envelope
 	ADDRESS		e_from;		/* the person it is from */
 	char		*e_sender;	/* e_from.q_paddr w comments stripped */
 	char		**e_fromdomain;	/* the domain part of the sender */
+	bool		e_smtputf8;	/* whether the sender demanded SMTPUTF8 */
 	ADDRESS		*e_sendqueue;	/* list of message recipients */
 	ADDRESS		*e_errorqueue;	/* the queue for error responses */
 
@@ -1928,6 +1934,7 @@ struct termescape
 #define D_CANONREQ	'c'	/* canonification required (cf) */
 #define D_IFNHELO	'h'	/* use if name for HELO */
 #define D_FQMAIL	'f'	/* fq sender address required (cf) */
+#define D_EAI		'i'	/* EAI supported */
 #define D_FQRCPT	'r'	/* fq recipient address required (cf) */
 #define D_SMTPS		's'	/* SMTP over SSL (smtps) */
 #define D_UNQUALOK	'u'	/* unqualified address is ok (cf) */
@@ -2355,7 +2362,6 @@ EXTERN bool	ForkQueueRuns;	/* fork for each job when running the queue */
 EXTERN bool	FromFlag;	/* if set, "From" person is explicit */
 EXTERN bool	FipsMode;
 EXTERN bool	GrabTo;		/* if set, get recipients from msg */
-EXTERN bool	EightBitAddrOK;	/* we'll let 8-bit addresses through */
 EXTERN bool	HasEightBits;	/* has at least one eight bit input byte */
 EXTERN bool	HasWildcardMX;	/* don't use MX records when canonifying */
 EXTERN bool	HoldErrs;	/* only output errors to transcript */
