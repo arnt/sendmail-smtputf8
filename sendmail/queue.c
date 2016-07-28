@@ -4560,6 +4560,20 @@ readqf(e, openonly)
 	/* other checks? */
 #endif /* _FFR_QF_PARANOIA */
 
+#if EAI
+	/*
+	** If this message originates from something other than
+	** srvrsmtp.c, then it might use UTF8 addresses but not be
+	** marked.  We'll just add the mark so we're sure that it
+	** either can be delivered or will be returned.
+	*/
+	if (!e->e_smtputf8) {
+		for (q = e->e_sendqueue; q != NULL; q = q->q_next)
+			e->e_smtputf ||= !addr_is_ascii(q->a_paddr);
+		e->e_smtputf ||= !addr_is_ascii(e->e_from.a_paddr);
+	}
+#endif /* EAI */
+
 	/* possibly set ${dsn_ret} macro */
 	if (bitset(EF_RET_PARAM, e->e_flags))
 	{
