@@ -236,8 +236,6 @@ struct rusage;	/* forward declaration to get gcc to shut up in wait.h */
 
 #ifndef EAI
 # define EAI		1	/* SMTP SMTPUTF8 and related */
-#else
-#error "Testing EAI is the point"
 #endif /* EAI */
 
 /**********************************************************************
