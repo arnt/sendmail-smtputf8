@@ -344,7 +344,7 @@ hasctrlchar(addr, isrcpt, complain)
 			}
 			result = "too long";
 		}
-		if (!quoted && ((0x7f & *addr) < 32 || *addr == 127))
+		if (!quoted && ((unsigned char)*addr < 32 || *addr == 127))
 		{
 			result = "non-printable character";
 			*addr = BAD_CHAR_REPLACEMENT;
