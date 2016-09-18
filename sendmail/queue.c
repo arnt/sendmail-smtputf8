@@ -4568,9 +4568,12 @@ readqf(e, openonly)
 	** either can be delivered or will be returned.
 	*/
 	if (!e->e_smtputf8) {
+		ADDRESS *q;
 		for (q = e->e_sendqueue; q != NULL; q = q->q_next)
-			e->e_smtputf ||= !addr_is_ascii(q->a_paddr);
-		e->e_smtputf ||= !addr_is_ascii(e->e_from.a_paddr);
+			if (!addr_is_ascii(q->q_paddr) && !e->e_smtputf8)
+				e->e_smtputf8 = true;
+		if (!addr_is_ascii(e->e_from.q_paddr) && !e->e_smtputf8)
+			e->e_smtputf8 = true;
 	}
 #endif /* EAI */
 
