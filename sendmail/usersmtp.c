@@ -465,10 +465,10 @@ helo_options(line, firstline, m, mci, e)
 		mci->mci_flags |= MCIF_PIPELINED;
 	else if (sm_strcasecmp(line, "verb") == 0)
 		mci->mci_flags |= MCIF_VERB;
-#if EAI
+#if _FFR_EAI
 	else if (sm_strcasecmp(line, "smtputf8") == 0)
 		mci->mci_flags |= MCIF_EAI;
-#endif /* EAI */
+#endif /* _FFR_EAI */
 #if STARTTLS
 	else if (sm_strcasecmp(line, "starttls") == 0)
 		mci->mci_flags |= MCIF_TLS;
@@ -2031,7 +2031,7 @@ smtpmailfrom(m, mci, e)
 		return EX_TEMPFAIL;
 	}
 
-#if EAI
+#if _FFR_EAI
 	/*
 	**  Abort right away if the message needs SMTPUTF8 and the
 	**  server does not advertise SMTPUTF8.
@@ -2042,7 +2042,7 @@ smtpmailfrom(m, mci, e)
 		mci_setstat(mci, EX_NOTSTICKY, "5.6.7", NULL);
 		return EX_DATAERR;
 	}
-#endif /* EAI */
+#endif /* _FFR_EAI */
 
 	/* set up appropriate options to include */
 	if (bitset(MCIF_SIZE, mci->mci_flags) && e->e_msgsize > 0)
@@ -2057,13 +2057,13 @@ smtpmailfrom(m, mci, e)
 		bufp = optbuf;
 	}
 
-#if EAI
+#if _FFR_EAI
 	if (e->e_smtputf8) {
 		(void) sm_snprintf(bufp, SPACELEFT(optbuf, bufp),
 				 " SMTPUTF8");
 		bufp += strlen(bufp);
 	}
-#endif /* EAI */
+#endif /* _FFR_EAI */
 
 	bodytype = e->e_bodytype;
 	if (bitset(MCIF_8BITMIME, mci->mci_flags))

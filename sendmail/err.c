@@ -1010,13 +1010,23 @@ fmtmsg(eb, to, num, enhsc, eno, fmt, ap)
 		(void) sm_strlcpyn(eb, spaceleft, 2,
 				   shortenstring(to, MAXSHORTSTR), "... ");
 		spaceleft -= strlen(eb);
+#if _FFR_EAI
 		eb += strlen(eb);
+#else
+		while (*eb != '\0')
+			*eb++ &= 0177;
+#endif
 	}
 
 	/* output the message */
 	(void) sm_vsnprintf(eb, spaceleft, fmt, ap);
 	spaceleft -= strlen(eb);
+#if _FFR_EAI
 	eb += strlen(eb);
+#else
+	while (*eb != '\0')
+		*eb++ &= 0177;
+#endif
 
 	/* output the error code, if any */
 	if (eno != 0)

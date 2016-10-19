@@ -273,6 +273,14 @@ invalidaddr(addr, delimptr, isrcpt)
 	}
 	for (; *addr != '\0'; addr++)
 	{
+#if !EAI
+		if (!EightBitAddrOK && (*addr & 0340) == 0200)
+		{
+			setstat(EX_USAGE);
+			result = true;
+			*addr = BAD_CHAR_REPLACEMENT;
+		}
+#endif
 		if (++len > MAXNAME - 1)
 		{
 			char saved = *addr;
@@ -362,6 +370,15 @@ hasctrlchar(addr, isrcpt, complain)
 				break;
 			}
 		}
+#if !EAI
+		if (!EightBitAddrOK && (*addr & 0340) == 0200)
+		{
+			setstat(EX_USAGE);
+			result = "8-bit character";
+			*addr = BAD_CHAR_REPLACEMENT;
+			continue;
+		}
+#endif
 	}
 	if (quoted)
 		result = "unbalanced quote"; /* unbalanced quote */
@@ -746,6 +763,11 @@ prescan(addr, delim, pvpbuf, pvpbsize, delimptr, toktab, ignore)
 				}
 
 				/* squirrel it away */
+#if !ALLOW_255
+				if ((char) c == (char) -1 && !tTd(82, 101) &&
+				    !EightBitAddrOK)
+					c &= 0x7f;
+#endif /* !ALLOW_255 */
 				*q++ = c;
 			}
 

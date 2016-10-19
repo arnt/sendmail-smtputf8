@@ -314,7 +314,9 @@ setdefaults(e)
 	e->e_xfqgrp = NOQGRP;
 	e->e_xfqdir = NOQDIR;
 	e->e_ctime = curtime();
+#if _FFR_EAI
 	e->e_smtputf8 = false;
+#endif
 	SevenBitInput = false;			/* option 7 */
 	MaxMciCache = 1;			/* option k */
 	MciCacheTimeout = 5 MINUTES;		/* option K */
@@ -5747,7 +5749,7 @@ char	*CompileOptions[] =
 	"DNSMAP",
 # endif
 #endif
-#if EAI
+#if _FFR_EAI
 	"EAI",
 #endif
 #if EGD
@@ -6240,6 +6242,10 @@ char	*FFRCompileOptions[] =
 
 	"_FFR_DROP_TRUSTUSER_WARNING",
 #endif
+#if _FFR_EIGHT_BIT_ADDR_OK
+	/* EightBitAddrOK: allow 8-bit e-mail addresses */
+	"_FFR_EIGHT_BIT_ADDR_OK",
+#endif
 #if _FFR_EXTRA_MAP_CHECK
 	/* perform extra checks on $( $) in R lines */
 	"_FFR_EXTRA_MAP_CHECK",
@@ -6590,3 +6596,6 @@ char	*FFRCompileOptions[] =
 	NULL
 };
 
+#if _FFR_EAI && _FFR_EIGHT_BIT_ADDR_OK
+#error "Cannot enable both of these FFRs"
+#end

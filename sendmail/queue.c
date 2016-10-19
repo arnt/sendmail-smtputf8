@@ -665,7 +665,7 @@ queueup(e, announce, msync)
 		*p++ = 'n';
 	if (bitset(EF_SPLIT, e->e_flags))
 		*p++ = 's';
-#if EAI
+#if _FFR_EAI
 	if (e->e_smtputf8)
 		*p++ = 'e';
 #endif
@@ -4290,11 +4290,11 @@ readqf(e, openonly)
 					e->e_flags |= EF_WARNING;
 					break;
 
-#if EAI
+#if _FFR_EAI
 				  case 'e':	/* message requires EAI */
 					e->e_smtputf8 = true;
 					break;
-#endif /* EAI */
+#endif /* _FFR_EAI */
 				}
 			}
 			break;
@@ -4560,7 +4560,7 @@ readqf(e, openonly)
 	/* other checks? */
 #endif /* _FFR_QF_PARANOIA */
 
-#if EAI
+#if _FFR_EAI
 	/*
 	** If this message originates from something other than
 	** srvrsmtp.c, then it might use UTF8 addresses but not be
@@ -4575,7 +4575,7 @@ readqf(e, openonly)
 		if (!addr_is_ascii(e->e_from.q_paddr) && !e->e_smtputf8)
 			e->e_smtputf8 = true;
 	}
-#endif /* EAI */
+#endif /* _FFR_EAI */
 
 	/* possibly set ${dsn_ret} macro */
 	if (bitset(EF_RET_PARAM, e->e_flags))

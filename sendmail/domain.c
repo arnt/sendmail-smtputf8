@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 #include "map.h"
-#if EAI
+#if _FFR_EAI
 #include <unicode/uidna.h>
 #endif
 
@@ -239,7 +239,7 @@ getmxrr(host, mxhosts, mxprefs, droplocalhost, rcode, tryfallback, pttl)
 	if (host[0] == '[')
 		goto punt;
 
-#if EAI
+#if _FFR_EAI
 	if (!addr_is_ascii(host))
 	{
 		char buf[1024];
@@ -257,7 +257,7 @@ getmxrr(host, mxhosts, mxprefs, droplocalhost, rcode, tryfallback, pttl)
 		uidna_close(idna);
 		host = sm_rpool_strdup_x(CurEnv->e_rpool, buf);
 	}
-#endif /* EAI */
+#endif /* _FFR_EAI */
 
 	/*
 	**  If we don't have MX records in our host switch, don't
