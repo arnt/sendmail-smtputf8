@@ -6598,4 +6598,4 @@ char	*FFRCompileOptions[] =
 
 #if _FFR_EAI && _FFR_EIGHT_BIT_ADDR_OK
 #error "Cannot enable both of these FFRs"
-#end
+#endif

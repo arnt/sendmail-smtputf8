@@ -234,10 +234,6 @@ struct rusage;	/* forward declaration to get gcc to shut up in wait.h */
 # define PIPELINING	1	/* SMTP PIPELINING */
 #endif /* PIPELINING */
 
-#ifndef _FFR_EAI
-# define EAI		1	/* SMTP SMTPUTF8 and related */
-#endif /* EAI */
-
 /**********************************************************************
 **  End of site-specific configuration.
 **********************************************************************/

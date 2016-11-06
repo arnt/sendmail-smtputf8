@@ -1937,7 +1937,7 @@ struct termescape
 #define D_IFNHELO	'h'	/* use if name for HELO */
 #define D_FQMAIL	'f'	/* fq sender address required (cf) */
 #if _FFR_EAI
-#define D_EAI		'i'	/* EAI supported */
+#define D_EAI		'I'	/* EAI supported */
 #endif
 #define D_FQRCPT	'r'	/* fq recipient address required (cf) */
 #define D_SMTPS		's'	/* SMTP over SSL (smtps) */
@@ -2865,6 +2865,10 @@ extern char	*xtextify __P((char *, char *));
 extern bool	xtextok __P((char *));
 extern int	xunlink __P((char *));
 extern char	*xuntextify __P((char *));
+
+#if _FFR_EAI
+extern bool	addr_is_ascii __P((const char *));
+#endif
 
 #if _FFR_RCPTFLAGS
 extern bool	newmodmailer __P((ADDRESS *, int));

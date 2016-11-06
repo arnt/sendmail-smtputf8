@@ -744,6 +744,34 @@ returntosender(msg, returnq, flags, e)
 	return ret;
 }
 
+
+/*
+** DSNTYPENAME -- Returns the DSN name of the addrtype for this address
+**
+**	Sendmail's addrtypes are largely in different universes, and
+**	'fred' may be a valid address in different addrtype
+**	universes.
+**
+**	EAI extends the rfc822 universe rather than introduce a new
+**	universe.  Because of that, sendmail uses the rfc822 addrtype,
+**	but names it utf-8 when the EAI DSN extension requires that.
+*/
+
+const char *
+dsntypename(addrtype, addr)
+	const char * addrtype;
+	const char * addr;
+{
+	if (sm_strcasecmp(addrtype, "rfc822") != 0)
+		return addrtype;
+#ifdef _FFR_EAI
+	if (!addr_is_ascii(addr))
+		return "utf-8";
+#endif
+	return "rfc822";
+}
+
+
 /*
 **  ERRBODY -- output the body of an error message.
 **
@@ -1082,7 +1110,13 @@ errbody(mci, e, separator)
 		(void) sm_strlcpyn(buf, sizeof(buf), 2, "--", e->e_msgboundary);
 		if (!putline("", mci) ||
 		    !putline(buf, mci) ||
+#ifdef _FFR_EAI
+		    !putline(e->e_parent->e_smtputf8
+			     ? "Content-Type: message/global-delivery-status"
+			     : "Content-Type: message/delivery-status", mci) ||
+#else
 		    !putline("Content-Type: message/delivery-status", mci) ||
+#endif
 		    !putline("", mci))
 			goto writeerr;
 
@@ -1223,7 +1257,8 @@ errbody(mci, e, separator)
 					(void) sm_snprintf(actual,
 							   sizeof(actual),
 							   "%s; %.700s@%.100s",
-							   p, q->q_user,
+							   dsntypename(p, q->q_user),
+							   q->q_user,
 							   MyHostName);
 				}
 				else
@@ -1231,7 +1266,8 @@ errbody(mci, e, separator)
 					(void) sm_snprintf(actual,
 							   sizeof(actual),
 							   "%s; %.800s",
-							   p, q->q_user);
+							   dsntypename(p, q->q_user),
+							   q->q_user);
 				}
 			}
 
@@ -1247,6 +1283,21 @@ errbody(mci, e, separator)
 					q->q_finalrcpt = sm_rpool_strdup_x(e->e_rpool,
 									   actual);
 			}
+
+#ifdef _FFR_EAI
+			if (sm_strncasecmp("rfc822;", q->q_finalrcpt, 7) == 0 &&
+			    !addr_is_ascii(q->q_user)) {
+			        char utf8rcpt[1024];
+				char * a;
+				a = strchr(q->q_finalrcpt, ';');
+				while(*a == ';' || *a == ' ')
+					a++;
+				sm_snprintf(utf8rcpt, 1023,
+					    "utf-8; %.800s", a);
+				q->q_finalrcpt = sm_rpool_strdup_x(e->e_rpool,
+								   utf8rcpt);
+			}
+#endif
 
 			if (q->q_finalrcpt != NULL)
 			{
@@ -1373,9 +1424,21 @@ errbody(mci, e, separator)
 
 			if (!putline(buf, mci))
 				goto writeerr;
+#ifdef _FFR_EAI
+			if (e->e_parent->e_smtputf8)
+				(void) sm_strlcpyn(buf, sizeof(buf), 2,
+						   "Content-Type: message/global",
+						   sendbody ? "" : "-headers");
+			else
+				(void) sm_strlcpyn(buf, sizeof(buf), 2,
+						   "Content-Type: ",
+						sendbody ? "message/rfc822"
+							 : "text/rfc822-headers");
+#else
 			(void) sm_strlcpyn(buf, sizeof(buf), 2, "Content-Type: ",
 					sendbody ? "message/rfc822"
 						 : "text/rfc822-headers");
+#endif
 			if (!putline(buf, mci))
 				goto writeerr;
 

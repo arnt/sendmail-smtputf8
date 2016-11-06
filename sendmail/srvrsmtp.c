@@ -140,9 +140,9 @@ extern ENVELOPE	BlankEnvelope;
 
 bool
 addr_is_ascii(a)
-	char * a;
+	const char * a;
 {
-	while (a != NULL && *a != '\0' && *a >= ' ' && *a < 127)
+	while (a != NULL && *a != '\0' && *a >= ' ' && (unsigned char)*a < 127)
 		a++;
 	return (a != NULL && *a == '\0');
 }
@@ -748,10 +748,21 @@ do								\
 #else
 # define auth_active	false
 #endif
+#ifdef _FFR_EAI
+#define GET_PROTOCOL()					\
+	(e->e_smtputf8					\
+	    ? (auth_active				\
+		? (tls_active ? "UTF8SMTPSA" : "UTF8SMTPA") \
+		: (tls_active ? "UTF8SMTPS"  : "UTF8SMTP")) \
+            : (auth_active				\
+		? (tls_active ? "ESMTPSA" : "ESMTPA")	\
+		: (tls_active ? "ESMTPS"  : "ESMTP")))
+#else
 #define GET_PROTOCOL()					\
 	(auth_active					\
 	    ? (tls_active ? "ESMTPSA" : "ESMTPA")	\
 	    : (tls_active ? "ESMTPS"  : "ESMTP"))
+#endif
 
 static bool SevenBitInput_Saved;	/* saved version of SevenBitInput */
 
@@ -2730,6 +2741,10 @@ smtp(nullserver, d_flags, e)
 				sm_exc_raisenew_x(&EtypeQuickAbort, 1);
 
 #if _FFR_EAI
+			if (e->e_smtputf8) {
+				protocol = GET_PROTOCOL();
+				macdefine(&e->e_macro, A_PERM, 'r', protocol);
+			}
 			/* UTF8 addresses are only legal with SMTPUTF8 */
 			if (!e->e_smtputf8 && !addr_is_ascii(e->e_from.q_paddr)) {
 				usrerr("553 5.6.7 That address requires SMTPUTF8");
@@ -2975,7 +2990,7 @@ smtp(nullserver, d_flags, e)
 				goto rcpt_done;
 			}
 #if _FFR_EAI
-			if (!e->e_smtputf8 && !addr_is_ascii(a))
+			if (!e->e_smtputf8 && !addr_is_ascii(a->q_paddr))
 			{
 				usrerr("553 5.6.7 Address requires SMTPUTF8");
 				goto rcpt_done;

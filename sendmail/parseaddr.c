@@ -273,7 +273,7 @@ invalidaddr(addr, delimptr, isrcpt)
 	}
 	for (; *addr != '\0'; addr++)
 	{
-#if !EAI
+#ifndef _FFR_EAI
 		if (!EightBitAddrOK && (*addr & 0340) == 0200)
 		{
 			setstat(EX_USAGE);
@@ -370,7 +370,7 @@ hasctrlchar(addr, isrcpt, complain)
 				break;
 			}
 		}
-#if !EAI
+#ifndef _FFR_EAI
 		if (!EightBitAddrOK && (*addr & 0340) == 0200)
 		{
 			setstat(EX_USAGE);

@@ -248,7 +248,7 @@ getmxrr(host, mxhosts, mxprefs, droplocalhost, rcode, tryfallback, pttl)
 		UIDNA *idna;
 		int anl;
 
-		idna = uidna_openUTS46(UIDNA_DEFAULT, &error);
+		idna = uidna_openUTS46(UIDNA_NONTRANSITIONAL_TO_ASCII, &error);
 		anl = uidna_nameToASCII_UTF8(idna,
 					     host, strlen(host),
 					     buf, sizeof(buf) - 1,

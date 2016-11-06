@@ -1854,6 +1854,9 @@ main(argc, argv, envp)
 
 	/* MIME message/xxx subtypes that can be treated as messages */
 	setclass('s', "rfc822");
+#ifdef _FFR_EAI
+	setclass('s', "global");
+#endif
 
 	/* MIME Content-Transfer-Encodings that can be encoded */
 	setclass('e', "7bit");

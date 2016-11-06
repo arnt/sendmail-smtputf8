@@ -508,6 +508,11 @@ recipient(new, sendq, aliaslevel, e)
 		p = e->e_from.q_mailer->m_addrtype;
 		if (p == NULL)
 			p = "rfc822";
+#ifdef _FFR_EAI
+		if (sm_strcasecmp(p, "rfc822") == 0 &&
+		    !addr_is_ascii(q->q_user))
+			p = "utf-8";
+#endif
 		if (sm_strcasecmp(p, "rfc822") != 0)
 		{
 			(void) sm_snprintf(frbuf, sizeof(frbuf), "%s; %.800s",
